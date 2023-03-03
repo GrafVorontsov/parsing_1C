@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+
 /*
 ----Документ
 НомерДок
@@ -7,6 +10,17 @@ public class Document {
     String data;
     Client client;
     Auto auto;
+
+    public ArrayList<String> getParts() {
+        return parts;
+    }
+
+    public void setParts(ArrayList<String> parts) {
+        this.parts = parts;
+    }
+
+    //ArrayList<Parts> parts;
+    ArrayList<String> parts;
 
     public Document() {
     }

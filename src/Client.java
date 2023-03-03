@@ -10,6 +10,9 @@ public class Client {
         this.name = name;
         this.phone = phone;
     }
+    public Client(String name) {
+        this.name = name;
+    }
 
     public String getKod() {
         return kod;

@@ -7,6 +7,9 @@ public class Auto {
 
     public Auto() {
     }
+    public Auto(String vin) {
+        this.vin = vin;
+    }
 
     public String getName() {
         return name;
