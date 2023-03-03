@@ -6,6 +6,11 @@ public class Client {
     public Client() {
     }
 
+    public Client(String name, String phone) {
+        this.name = name;
+        this.phone = phone;
+    }
+
     public String getKod() {
         return kod;
     }
