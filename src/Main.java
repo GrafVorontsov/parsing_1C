@@ -2,44 +2,20 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    /*
-    ----Документ
-    НомерДок
-    ДатаДок
-    -----Клиент
-    Код
-    Наименование
-    Телефоны
-    -----Авто
-    Наименование
-    НомерАвто
-    НомерШасси
-    НомерДвигателя
-    ГодВыпуска
-    Пробег
-    -----ТМЦ
-    ТМЦ
-    Кво
-    ЦенаБезНДС
-    СуммаБезНДС
-    Исполнитель
-    Номер
-     */
-
     public static void main(String[] args) throws IOException {
         String line = "";
         String splitBy = ",";
         ArrayList<String> list = new ArrayList<>();
-        ArrayList<String> devidedList = new ArrayList<>();
+        //ArrayList<String> devidedList = new ArrayList<>();
         ArrayList<Document> documentList = new ArrayList<>();
         Document doc = null;
         Client client = null;
-        Parts parts = new Parts();
+        //Parts parts = new Parts();
         Auto auto = null;
-        String tmc = "";
-        String number = "";
-        ArrayList<ArrayList<String>> partsList = new ArrayList<>();
-        ArrayList<Parts> partsArray = new ArrayList<>();
+        //String tmc = "";
+        //String number = "";
+        //ArrayList<ArrayList<String>> partsList = new ArrayList<>();
+        //ArrayList<Parts> partsArray = new ArrayList<>();
         ArrayList<String> xString = null;
         ArrayList<String> docxString = null;
         HashMap<Integer, ArrayList<String>> map = new HashMap<>();
@@ -104,16 +80,45 @@ public class Main {
             documentList.add(doc);
         }
 
-        /*for (Document faktura: documentList) {
-            System.out.println(faktura.getNumber() + " " + faktura.getData() + " " + faktura.getClient().getName()
-                    + " " + faktura.getAuto().getVin()  + " " + faktura.getAuto().getKm()
-            + " " + faktura.getParts());
-            //System.out.println(faktura.getNumber() + " " + faktura.getData());
-        }*/
+        String tovarline = "";
+        Set<String> tovarlist = new LinkedHashSet<>();
+        Set<String> uslugilist = new LinkedHashSet<>();
+        try {
+            //parsing a CSV file into BufferedReader class constructor
+            BufferedReader br = new BufferedReader(new FileReader("/home/sergio/Документы/tovar.csv"));
+            while ((tovarline = br.readLine()) != null) {  //returns a Boolean value
+                String[] splittovarline = tovarline.split(splitBy);
+                if (splittovarline[3].equals("281")){
+                    tovarlist.add(splittovarline[1].trim().replaceAll("\"", ""));
+                } else {
+                    uslugilist.add(splittovarline[1].trim().replaceAll("\"", ""));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        String clientline = "";
+        ArrayList<String> clientlist = new ArrayList<>();
+        try {
+            //parsing a CSV file into BufferedReader class constructor
+            BufferedReader br = new BufferedReader(new FileReader("/home/sergio/Документы/clients.csv"));
+            while ((clientline = br.readLine()) != null) {  //returns a Boolean value
+                clientlist.add(clientline);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        File csvFile = new File("/home/sergio/Документы/employees.csv");
-        FileWriter fileWriter = new FileWriter(csvFile);
+        File csvFileSchet = new File("/home/sergio/Документы/schet.csv");
+        FileWriter fileWriter = new FileWriter(csvFileSchet);
+
+        File csvFile = new File("/home/sergio/Документы/parts.csv");
+        FileWriter fileWriterTovar = new FileWriter(csvFile);
+        File csvFileUslugi = new File("/home/sergio/Документы/works.csv");
+        FileWriter fileWriterUslugi = new FileWriter(csvFileUslugi);
+
+        Set<String> clientsList = new LinkedHashSet<>();
 
         for (Document schet: documentList) {
             String listString = String.join(", ", schet.getParts());
@@ -123,37 +128,77 @@ public class Main {
             while (index < splitParts.length) {
                 String[] sParts = splitParts[index].split(", ");
 
-                String nm;
+                String nazvaTovara = sParts[0].trim().replaceAll("\"", "");
+                String kolvoTovara = sParts[1];
+                String cenaTovara = sParts[2];
+                String summaTovara = sParts[3];
+                String nomerTovara;
                 if (isValidIndex(sParts, 4)) {
-                    nm = sParts[4];
+                    nomerTovara = sParts[4].replaceAll("\"", "").replaceAll("\\+", "")
+                            .replaceAll("---", "").replaceAll("--", "");
                 } else {
-                    nm = " ";
+                    nomerTovara = " ";
                 }
 
-                //System.out.println(schet.getNumber() + " " + schet.getData() + " " + schet.getClient().getName()
-                //        + " " + schet.getAuto().getVin()  + " " + schet.getAuto().getKm() + " " + splitParts[index]);
-                System.out.println(schet.getNumber() + " " + schet.getData() + " " + schet.getClient().getName()
-                        + " " + schet.getAuto().getVin()  + " " + schet.getAuto().getKm() + " " + sParts[0] + " " + sParts[1]
-                        + " " + sParts[2] + " " + sParts[3] + " " + nm);
-                //System.out.println();
+                for (String c: clientlist) {
+                    String[] splitClient = c.split(splitBy);
+                    String clientKod = splitClient[0];
+                    String clientName = splitClient[1];
+                    String clientPhone;
+                    if (isValidIndex(splitClient, 2)) {
+                        clientPhone = splitClient[2].replaceAll("\\+38", "");
+                    } else {
+                        clientPhone = " ";
+                    }
 
-                StringBuilder lineCSV = new StringBuilder();
-                lineCSV.append(schet.getNumber()).append(',').
-                        append(schet.getData()).append(',').
-                        append(schet.getClient().getName()).append(',').
-                        append(schet.getAuto().getVin()).append(',').
-                        append(schet.getAuto().getKm()).append(',').
-                        append(sParts[0].trim()).append(',').
-                        append(sParts[1]).append(',').
-                        append(sParts[2]).append(',').
-                        append(sParts[3]).append(',').
-                        append(nm).append("\n");
+                    if (clientName.equals(schet.getClient().getName())){
+                        StringBuilder lineCSV = new StringBuilder();
+                        lineCSV.append(schet.getNumber()).append(',').
+                                append(clientKod).append(','). //код клиента
+                                append(schet.getAuto().getVin()).append(',').
+                                append(clientPhone).append(','). //телефон клиента
+                                append(schet.getData()).append(',').
+                                append(schet.getAuto().getKm()).append("\n");
 
-                fileWriter.write(lineCSV.toString());
+                        clientsList.add(lineCSV.toString());
+                    }
+                }
+
+                StringBuilder lineCSVUslugi = new StringBuilder();
+                lineCSVUslugi.append(schet.getNumber()).append(',').
+                        append(nazvaTovara).append(',').
+                        append(nomerTovara).append(',').
+                        append(cenaTovara).append(',').
+                        append(kolvoTovara).append("\n");
+
+                StringBuilder lineCSVTovar = new StringBuilder();
+                lineCSVTovar.append(schet.getNumber()).append(',').
+                        append(nomerTovara).append(',').
+                        append(nazvaTovara).append(',').
+                        append(cenaTovara).append(',').
+                        append(kolvoTovara).append("\n");
+
+                for (String u: uslugilist) {
+                    if (u.equals(nazvaTovara)){
+                        fileWriterUslugi.write(lineCSVUslugi.toString());
+                    }
+                }
+                for (String t: tovarlist) {
+                    if (t.equals(nazvaTovara)){
+                        fileWriterTovar.write(lineCSVTovar.toString());                    }
+                }
+
                 index++;
             }
         }
+
+        for (String clList: clientsList) {
+            fileWriter.write(clList);
+        }
+
         fileWriter.close();
+        fileWriterTovar.close();
+        fileWriterUslugi.close();
     }
     public static boolean isValidIndex(String[] arr, int index) {
         try {
@@ -163,4 +208,5 @@ public class Main {
         }
         return true;
     }
+
 }
