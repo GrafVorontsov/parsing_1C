@@ -3,25 +3,18 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        String line = "";
+        String line;
         String splitBy = ",";
-        ArrayList<String> list = new ArrayList<>();
-        //ArrayList<String> devidedList = new ArrayList<>();
+        ArrayList<String> list = new ArrayList<>(); //массив строк из файла со Счетами-фактурами
         ArrayList<Document> documentList = new ArrayList<>();
-        Document doc = null;
-        Client client = null;
-        //Parts parts = new Parts();
+        Document doc;
+        Client client;
         Auto auto = null;
-        //String tmc = "";
-        //String number = "";
-        //ArrayList<ArrayList<String>> partsList = new ArrayList<>();
-        //ArrayList<Parts> partsArray = new ArrayList<>();
         ArrayList<String> xString = null;
-        ArrayList<String> docxString = null;
+        ArrayList<String> docxString;
         HashMap<Integer, ArrayList<String>> map = new HashMap<>();
-        HashMap<Integer, ArrayList<String>> docmap = new HashMap<>();
         try {
-            //parsing a CSV file into BufferedReader class constructor
+            //Парсим файл со Счетами-фактурами, который выгрузили с 1С
             BufferedReader br = new BufferedReader(new FileReader("/home/sergio/Документы/final.csv"));
             while ((line = br.readLine()) != null) {  //returns a Boolean value
                 list.add(line);
@@ -30,67 +23,75 @@ public class Main {
             e.printStackTrace();
         }
 
+        //пробегаем по массиву со Счетами-фактурами
         int i = 0;
         for (String s: list ) {
             String[] str = s.split(splitBy);
+            //если в строке есть 0 то добавляем новый элемент в map
             if (str[1].equals("0")) {
-                i++;
+                i++; //увеличиваем счётчик ключей map
                 xString = new ArrayList<>();
-                map.put(i, xString);
+                map.put(i, xString); //добавляем новый элемент в map
             }
             if (!str[1].equals("0")){
-                xString.add(s);
+                assert xString != null;
+                xString.add(s); //собираем массив строк из истальных строк
             }
         }
 
-
+        //распарсиваем строки из map
         for(Map.Entry<Integer, ArrayList<String>> item : map.entrySet()) {
-            //System.out.println(item.getKey() + " " + item.getValue());
-            doc = new Document();
-            int x = 0;
+            doc = new Document(); //создали новый документ (отдельный счёт-фактура)
             docxString = new ArrayList<>();
 
             for (String d: item.getValue()) {
                 String[] filteredString = d.split(splitBy);
 
-                if (filteredString[2].equals("НомерДок")){
-                    doc.setNumber(filteredString[5]);
-                }else if (filteredString[2].equals("ДатаДок")){
-                    doc.setData(filteredString[5]);
-                }else if (filteredString[2].equals("ОтборЗаказаКонтрагент")){
-                    client = new Client();
-                    client.setName(filteredString[5]);
-                    doc.setClient(client);
-                }else if (filteredString[2].equals("Автомобиль")){
-                    auto = new Auto();
-                    auto.setVin(filteredString[5]);
-                } else if (filteredString[2].equals("Пробег")){
-                    auto.setKm(filteredString[5]);
-                    doc.setAuto(auto);
-                } else {
-                    if (filteredString[2].equals("ТМЦ")) {
-                        docxString.add("ТМЦ " + filteredString[5]);
-                    } else {
-                        docxString.add(filteredString[5]);
-                    }
-                    //System.out.println(filteredString[5]);
+                switch (filteredString[2]) {
+                    case "НомерДок":
+                        doc.setNumber(filteredString[5]);
+                        break;
+                    case "ДатаДок":
+                        doc.setData(filteredString[5]);
+                        break;
+                    case "ОтборЗаказаКонтрагент":
+                        client = new Client();
+                        client.setName(filteredString[5]);
+                        doc.setClient(client);
+                        break;
+                    case "Автомобиль":
+                        auto = new Auto();
+                        auto.setVin(filteredString[5]);
+                        break;
+                    case "Пробег":
+                        assert auto != null;
+                        auto.setKm(filteredString[5]);
+                        doc.setAuto(auto);
+                        break;
+                    default:  //собираем массив из всех строк ТМЦ конкретного счёта
+                        if (filteredString[2].equals("ТМЦ")) {
+                            docxString.add("ТМЦ " + filteredString[5]);
+                        } else {
+                            docxString.add(filteredString[5]);
+                        }
+                        break;
                 }
             }
             doc.setParts(docxString);
             documentList.add(doc);
         }
 
-        String tovarline = "";
+        String tovarline;
         Set<String> tovarlist = new LinkedHashSet<>();
         Set<String> uslugilist = new LinkedHashSet<>();
         try {
-            //parsing a CSV file into BufferedReader class constructor
+            //парсим файл списка товаров и услуг
             BufferedReader br = new BufferedReader(new FileReader("/home/sergio/Документы/tovar.csv"));
             while ((tovarline = br.readLine()) != null) {  //returns a Boolean value
                 String[] splittovarline = tovarline.split(splitBy);
-                if (splittovarline[3].equals("281")){
+                if (splittovarline[3].equals("281")){ // если 281 значит товар
                     tovarlist.add(splittovarline[1].trim().replaceAll("\"", ""));
-                } else {
+                } else { //если нет то услуги
                     uslugilist.add(splittovarline[1].trim().replaceAll("\"", ""));
                 }
             }
@@ -98,10 +99,10 @@ public class Main {
             e.printStackTrace();
         }
 
-        String clientline = "";
+        String clientline;
         ArrayList<String> clientlist = new ArrayList<>();
         try {
-            //parsing a CSV file into BufferedReader class constructor
+            //парсим список клиентов
             BufferedReader br = new BufferedReader(new FileReader("/home/sergio/Документы/clients.csv"));
             while ((clientline = br.readLine()) != null) {  //returns a Boolean value
                 clientlist.add(clientline);
@@ -110,19 +111,18 @@ public class Main {
             e.printStackTrace();
         }
 
-        File csvFileSchet = new File("/home/sergio/Документы/schet.csv");
+        File csvFileSchet = new File("/home/sergio/Документы/schet.csv"); //файл с готовыми счетами
         FileWriter fileWriter = new FileWriter(csvFileSchet);
 
-        File csvFile = new File("/home/sergio/Документы/parts.csv");
+        File csvFile = new File("/home/sergio/Документы/parts.csv"); //файл с запчастями
         FileWriter fileWriterTovar = new FileWriter(csvFile);
-        File csvFileUslugi = new File("/home/sergio/Документы/works.csv");
+        File csvFileUslugi = new File("/home/sergio/Документы/works.csv"); //файл с работами
         FileWriter fileWriterUslugi = new FileWriter(csvFileUslugi);
 
         Set<String> clientsList = new LinkedHashSet<>();
 
         for (Document schet: documentList) {
             String listString = String.join(", ", schet.getParts());
-            //System.out.println(listString);
             String[] splitParts = listString.split("ТМЦ");
             int index = 1;
             while (index < splitParts.length) {
@@ -131,7 +131,6 @@ public class Main {
                 String nazvaTovara = sParts[0].trim().replaceAll("\"", "");
                 String kolvoTovara = sParts[1];
                 String cenaTovara = sParts[2];
-                String summaTovara = sParts[3];
                 String nomerTovara;
                 if (isValidIndex(sParts, 4)) {
                     nomerTovara = sParts[4].replaceAll("\"", "").replaceAll("\\+", "")
@@ -153,30 +152,30 @@ public class Main {
 
                     if (clientName.equals(schet.getClient().getName())){
                         StringBuilder lineCSV = new StringBuilder();
-                        lineCSV.append(schet.getNumber()).append(',').
+                        lineCSV.append(schet.getNumber()).append(','). //номер счёта
                                 append(clientKod).append(','). //код клиента
-                                append(schet.getAuto().getVin()).append(',').
+                                append(schet.getAuto().getVin()).append(','). //vin код авто
                                 append(clientPhone).append(','). //телефон клиента
-                                append(schet.getData()).append(',').
-                                append(schet.getAuto().getKm()).append("\n");
+                                append(schet.getData()).append(','). //дата счёта
+                                append(schet.getAuto().getKm()).append("\n"); //пробег
 
                         clientsList.add(lineCSV.toString());
                     }
                 }
 
                 StringBuilder lineCSVUslugi = new StringBuilder();
-                lineCSVUslugi.append(schet.getNumber()).append(',').
-                        append(nazvaTovara).append(',').
-                        append(nomerTovara).append(',').
-                        append(cenaTovara).append(',').
-                        append(kolvoTovara).append("\n");
+                lineCSVUslugi.append(schet.getNumber()).append(','). //номер счёта
+                        append(nazvaTovara).append(','). //название услуг
+                        append(nomerTovara).append(','). //механик, который делал
+                        append(cenaTovara).append(','). //цена услуг
+                        append(kolvoTovara).append("\n"); //количество
 
                 StringBuilder lineCSVTovar = new StringBuilder();
-                lineCSVTovar.append(schet.getNumber()).append(',').
-                        append(nomerTovara).append(',').
-                        append(nazvaTovara).append(',').
-                        append(cenaTovara).append(',').
-                        append(kolvoTovara).append("\n");
+                lineCSVTovar.append(schet.getNumber()).append(','). //номер счёта
+                        append(nomerTovara).append(','). //номер детали
+                        append(nazvaTovara).append(','). //название товара
+                        append(cenaTovara).append(','). //цена товара
+                        append(kolvoTovara).append("\n"); //количество
 
                 for (String u: uslugilist) {
                     if (u.equals(nazvaTovara)){
@@ -200,6 +199,7 @@ public class Main {
         fileWriterTovar.close();
         fileWriterUslugi.close();
     }
+    //проверка на наличие индекса в массиве
     public static boolean isValidIndex(String[] arr, int index) {
         try {
             Objects.checkIndex(index, arr.length);
@@ -208,5 +208,4 @@ public class Main {
         }
         return true;
     }
-
 }
